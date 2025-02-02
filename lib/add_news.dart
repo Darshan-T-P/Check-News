@@ -1,8 +1,9 @@
-import 'dart:io';
-
+import 'package:check_news/screens/image_post.dart';
+import 'package:check_news/services/storage/storage_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class AddNews extends StatefulWidget {
   const AddNews({super.key});
@@ -15,181 +16,159 @@ class _AddNewsState extends State<AddNews> {
   final TextEditingController _titlecontroller = TextEditingController();
   final TextEditingController _contentcontroller = TextEditingController();
 
-  File? _selectedImage;
-  final ImagePicker _picker = ImagePicker();
+  String? _imageUrl;
+  final String _defaultImageUrl =
+      "https://i.ibb.co/CtjXmQ7/Adobe-Stock-245562438-scaled.jpg"; // Replace with your default image URL
 
-  Future<void> uploadNewsToDb() async {
+  Future<void> uploadNewsToDb(String imageUrl) async {
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      // Fetch user's name from Firestore
+      final userDoc = await FirebaseFirestore.instance.collection("users").doc(user.uid).get();
+      final userName = userDoc.data()?['name'] ?? "Unknown";
+
       final data = await FirebaseFirestore.instance.collection("news").add({
         "title": _titlecontroller.text.trim(),
         "content": _contentcontroller.text.trim(),
+        "image": imageUrl,
+        "Author": userName,
         "Date": FieldValue.serverTimestamp(),
+        "approve": "pending"
       });
-      print(data.id);
+      print("News uploaded with ID: ${data.id}");
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("News posted successfully!")));
     } catch (e) {
-      print(e);
+      print("Error uploading news: $e");
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Failed to post news: $e")));
     }
-  }
-
-  // Function to pick an image from the camera
-  Future<void> _pickFromCamera() async {
-    final image = await _picker.pickImage(source: ImageSource.camera);
-    if (image != null) {
-      setState(() {
-        _selectedImage = File(image.path);
-      });
-    }
-    Navigator.of(context).pop(); // Close the dialog
-  }
-
-  // Function to pick an image from the gallery
-  Future<void> _pickFromGallery() async {
-    final image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _selectedImage = File(image.path);
-      });
-    }
-    Navigator.of(context).pop(); // Close the dialog
-  }
-
-  // Function to show the bottom sheet
-  void _showImageSourceOptions() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              "Select Image Source",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.blue),
-              title: const Text("Choose from Camera"),
-              onTap: _pickFromCamera,
-            ),
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.green),
-              title: const Text("Choose from Gallery"),
-              onTap: _pickFromGallery,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Add News"),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // GestureDetector for the image container
-            GestureDetector(
-              onTap: _showImageSourceOptions,
-              child: Container(
-                height: 200,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
-                  image: _selectedImage != null
-                      ? DecorationImage(
-                          image: FileImage(_selectedImage!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: _selectedImage == null
-                    ? Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Icon(
-                            Icons.image,
-                            size: 200,
-                            color: Colors.black.withOpacity(0.5),
-                          ),
-                          const Text(
-                            "Tap to Add Image",
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      )
-                    :null ,
+    return Consumer<StorageServices>(
+        builder: (context, storageServices, child) {
+      return Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.tertiary,
+        appBar: AppBar(
+          title: const Text(
+            "Add News",
+            style: TextStyle(color: Color.fromRGBO(0, 223, 130, 1)),
+          ),
+          centerTitle: true,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ImagePost(
+                onImageUpload: (url) {
+                  setState(() {
+                    _imageUrl = url;
+                  });
+                },
               ),
-            ),
-            const SizedBox(height: 20),
-
-            // Title Input Field
-            TextField(
-              controller: _titlecontroller,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: "Title",
+              const SizedBox(height: 20),
+              TextField(
+                controller: _titlecontroller,
+                decoration: InputDecoration(
+                    border: const OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white, width: 20)),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                          color: Color.fromRGBO(0, 223, 130, 1),
+                          width: 4.0), // White border when focused
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                          color: Colors
+                              .white), // Transparent border when not focused
+                    ),
+                    labelText: "Title",
+                    labelStyle: TextStyle(
+                        color: Theme.of(context).colorScheme.primary)),
               ),
-            ),
-            const SizedBox(height: 20),
-
-            // Large Content Box
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(8),
-                ),
+              const SizedBox(height: 20),
+              SizedBox(
+                height: 280, // Adjust height for the content box
                 child: TextField(
                   controller: _contentcontroller,
-                  maxLines: null, // Allow multiline input
-                  expands: true, // Makes it fill the available space
-                  decoration: const InputDecoration(
-                    labelText: "Content",
-                    contentPadding: EdgeInsets.all(16),
-                    border: InputBorder.none,
+                  maxLines: null,
+                  expands: true,
+                  decoration: InputDecoration(
+                    labelText: "Content to be added",
+                    labelStyle:
+                        TextStyle(color: Theme.of(context).colorScheme.primary),
+                    contentPadding: const EdgeInsets.all(10),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                          color: Color.fromRGBO(0, 223, 130, 1),
+                          width: 4.0), // White border when focused
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                          color: Colors
+                              .white), // Transparent border when not focused
+                    ),
                     hintText: "Enter your content here...",
+                    hintStyle:
+                        TextStyle(color: Theme.of(context).colorScheme.primary),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text("Confirm to Post"),
+                          content: const Text(
+                              "Your content of news will be uploaded"),
+                          actions: [
+                            TextButton(
+                              onPressed: () async {
+                                final imageUrlToUse =
+                                    _imageUrl ?? _defaultImageUrl;
 
-            // Post Button
-            ElevatedButton.icon(
-              onPressed: () async {
-                // Handle post submission
-                await uploadNewsToDb();
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(fontSize: 18),
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
+                                await uploadNewsToDb(imageUrlToUse);
+
+                                Navigator.pop(context); // Close the dialog
+                              },
+                              child: const Text("OK"),
+                            ),
+                          ],
+                        );
+                      });
+                },
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: const TextStyle(fontSize: 18),
+                  backgroundColor: Theme.of(context).colorScheme.secondary,
+                  foregroundColor: Theme.of(context).colorScheme.tertiary,
+                ),
+                label: const Text("POST",
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                icon: const Icon(
+                  Icons.send,
+                  color: Colors.white,
+                ),
               ),
-              label: const Text("POST"),
-              icon: const Icon(
-                Icons.send,
-                color: Colors.white,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }

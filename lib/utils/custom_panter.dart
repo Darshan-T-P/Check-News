@@ -1,11 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class CardCustomPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    Paint paint = new Paint()
+    Paint paint = Paint()
       ..color = Colors.black
       ..style = PaintingStyle.fill;
 

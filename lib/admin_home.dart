@@ -1,26 +1,24 @@
 import 'package:check_news/add_news.dart';
 import 'package:check_news/admin_page.dart';
 import 'package:check_news/bookmars.dart';
-import 'package:check_news/global_news.dart';
 import 'package:check_news/news_list.dart';
 import 'package:check_news/profile_pages.dart';
-import 'package:check_news/search_page.dart';
 import 'package:flutter/material.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class AdminHome extends StatefulWidget {
+  const AdminHome({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<AdminHome> createState() => _AdminHomeState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _AdminHomeState extends State<AdminHome> {
   int currentPage = 0;
 
   // Pages corresponding to bottom navigation bar
   final List<Widget> pages = [
     NewsList(),
-    SearchPage(newsList: news,),
+    AdminPage(),
     AddNews(),
     ProfilePages(),
     BookmarksPages(),
@@ -105,8 +103,8 @@ class _HomePageState extends State<HomePage> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.search_rounded),
-              label: 'Search',
+              icon: Icon(Icons.assignment_ind_outlined),
+              label: 'Admin',
             ),
             BottomNavigationBarItem(
               icon: Icon(

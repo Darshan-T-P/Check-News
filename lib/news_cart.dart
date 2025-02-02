@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class NewsCart extends StatefulWidget {
   final String title;
   final String image;
-  final String time;
+  final dynamic time; // This can be a Timestamp or a String
   final String author;
 
   const NewsCart({
@@ -39,6 +41,23 @@ class _NewsCartState extends State<NewsCart> {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
 
+    // Attempt to parse the time, handle invalid formats gracefully
+    String formattedTime = "Invalid Time Format";
+    try {
+      DateTime dateTime;
+      // If the time is a Timestamp (like in Firebase)
+      if (widget.time is Timestamp) {
+        dateTime = DateTime.fromMillisecondsSinceEpoch(
+            widget.time.seconds * 1000); // Convert timestamp to DateTime
+      } else {
+        dateTime = DateTime.parse(widget.time); // For ISO8601 date format
+      }
+      formattedTime = timeago.format(dateTime); // Format as relative time
+    } catch (e) {
+      print("Error parsing date: $e");
+      formattedTime = "No Date";
+    }
+
     return Center(
       child: Stack(
         clipBehavior: Clip.none,
@@ -67,14 +86,24 @@ class _NewsCartState extends State<NewsCart> {
               borderRadius: BorderRadius.circular(30),
               child: Stack(
                 children: [
-                  // Image in the background
-                  Positioned.fill(
-                    child: Image.asset(
-                      widget.image,
-                      height: 200,
-                      width: double.infinity,
-                    ),
-                  ),
+                  // Image in the background from the network URL
+                  widget.image.startsWith('http')
+                      ? Positioned.fill(
+                          child: Image.network(
+                            widget.image,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Positioned.fill(
+                          child: Image.asset(
+                            widget.image, // Use Image.asset for local files
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                 ],
               ),
             ),
@@ -88,7 +117,7 @@ class _NewsCartState extends State<NewsCart> {
                 CircleAvatar(
                   radius: 20,
                   backgroundImage: AssetImage(
-                      'assets/images/img.jpg'), // Replace with your image path
+                      'assets/images/img.png'), // Replace with your image path
                   backgroundColor: Colors.grey.shade300,
                 ),
                 const SizedBox(width: 10),
@@ -116,23 +145,23 @@ class _NewsCartState extends State<NewsCart> {
                   ),
                 ),
                 const PopupMenuItem(
-                  value: "Favoutite",
+                  value: "Favourite",
                   child: Row(
-                    children: [Icon(Icons.thumb_up_alt), Text("Favourite")],
+                    children: [Icon(Icons.bookmark), Text("Favourite")],
                   ),
                 ),
               ],
               onSelected: (value) {
                 // Handle menu item selection
-                if (value == "option1") {
-                  print("Option 1 selected");
-                } else if (value == "option2") {
-                  print("Option 2 selected");
+                if (value == "Favourite") {
+                  toggleBookmark();
+                } else if (value == "share") {
+                  print("Share option selected");
                 }
               },
             ),
           ),
-          // Bottom area with content and row for likes, views, and time
+          // Bottom area with content and row for likes and time
           Positioned(
             bottom: 0,
             left: 0,
@@ -167,21 +196,9 @@ class _NewsCartState extends State<NewsCart> {
                             const Icon(Icons.thumb_up,
                                 size: 18, color: Colors.grey),
                             const SizedBox(width: 5),
-                            const Text(
-                              "1.2k Likes",
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.black54),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            const Icon(Icons.visibility,
-                                size: 18, color: Colors.grey),
-                            const SizedBox(width: 5),
-                            const Text(
-                              "3.5k Views",
-                              style: TextStyle(
+                            Text(
+                              "$likeCount Likes", // Display the current like count
+                              style: const TextStyle(
                                   fontSize: 12, color: Colors.black54),
                             ),
                           ],
@@ -191,9 +208,9 @@ class _NewsCartState extends State<NewsCart> {
                             const Icon(Icons.access_time,
                                 size: 18, color: Colors.grey),
                             const SizedBox(width: 5),
-                            const Text(
-                              "2h ago",
-                              style: TextStyle(
+                            Text(
+                              formattedTime, // Display the relative time
+                              style: const TextStyle(
                                   fontSize: 12, color: Colors.black54),
                             ),
                           ],
@@ -209,91 +226,4 @@ class _NewsCartState extends State<NewsCart> {
       ),
     );
   }
-  //   return Card(
-  //     elevation: 10, // Adds shadow for better visual hierarchy
-  //     shape: RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.circular(20), // Rounded corners
-  //     ),
-  //     margin: EdgeInsets.all(20), // Outer margin for spacing
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         // Stack for placing the bookmark button
-  //         Stack(
-  //           children: [
-  //             // News Image
-  //             ClipRRect(
-  //               borderRadius: BorderRadius.vertical(
-  //                 top: Radius.circular(20), // Rounded corners for the top
-  //               ),
-  //               child: Center(
-  //                 child: Image.asset(
-  //                   widget.image,
-  //                   height: 200,
-  //                   width: double.infinity,
-  //                   // fit: BoxFit.cover,
-  //                 ),
-  //               ),
-  //             ),
-  //             // Bookmark icon as a floating button at the top-right corner
-
-  //             Positioned(
-  //               top: 10, // Distance from the top
-  //               right: 10, // Distance from the right
-  //               child: FloatingActionButton(
-  //                 onPressed: (){},
-  //                 mini: true, // Makes the button smaller
-  //                 child: Icon(
-  //                   Icons.more_vert,
-  //                   color: Colors.white,
-  //                   size: 20,
-  //                 ),
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //         Padding(
-  //           padding: const EdgeInsets.all(16), // Padding for the content
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Text(
-  //                 widget.title,
-  //                 style: Theme.of(context).textTheme.titleMedium,
-  //               ),
-  //               SizedBox(height: 8), // Spacing between title and row
-  //               // Author and Time Row
-  //               Row(
-  //                 children: [
-  //                   SizedBox(width: 45),
-  //                   IconButton(
-  //                     icon: Icon(
-  //                       Icons.thumb_up_alt_outlined,
-  //                       color: Colors.blue,
-  //                     ),
-  //                     onPressed: toggleLike,
-  //                   ),
-  //                   Text(
-  //                     '$likeCount likes', // Display the current like count
-  //                     style: Theme.of(context).textTheme.bodyMedium,
-  //                   ),
-  //                   Spacer(),
-  //                   Icon(
-  //                     Icons.access_time_outlined,
-  //                     size: 20,
-  //                   ),
-  //                   SizedBox(width: 5), // Spacing between icon and time
-  //                   Text(
-  //                     widget.time,
-  //                     style: Theme.of(context).textTheme.titleSmall,
-  //                   ),
-  //                 ],
-  //               ), // Space before like section
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 }

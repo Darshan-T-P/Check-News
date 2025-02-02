@@ -1,4 +1,5 @@
 import 'package:check_news/global_news.dart';
+import 'package:check_news/news_details_page.dart';
 import 'package:flutter/material.dart';
 
 class BookmarksPages extends StatelessWidget {
@@ -7,72 +8,79 @@ class BookmarksPages extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.tertiary,
       appBar: AppBar(
-        title: Text("Bookmarked News"),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: const Text("Bookmarked News",
+            style: TextStyle(color: Color.fromRGBO(0, 223, 130, 1))),
+        centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView.builder(
-          itemCount: news.length,
-          itemBuilder: (context, index) {
-            final cartItem = news[index];
-            return Card(
-              elevation: 6,
-              margin: EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              shadowColor: Colors.green,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // News Image
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(
-                        cartItem['imageUrl'] as String,
-                        width: 80,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    SizedBox(width: 15), // Space between image and text
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            cartItem['title'].toString(),
-                            style: Theme.of(context).textTheme.titleMedium,
-                            overflow: TextOverflow
-                                .ellipsis, // Avoid long text overflow
-                            maxLines: 1,
+        padding: const EdgeInsets.all(12.0),
+        child: news.isNotEmpty
+            ? ListView.builder(
+                itemCount: news.length,
+                itemBuilder: (context, index) {
+                  final cartItem = news[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NewsDetailsPage(
+                            newsContent: cartItem,
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            'Author: ${cartItem['Author'].toString()}',
-                            style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      );
+                    },
+                    child: Card(
+                      color: Theme.of(context).colorScheme.secondary,
+                      margin: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 8.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        leading: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.asset(
+                            cartItem['imageUrl'] as String,
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
                           ),
-                          SizedBox(height: 10),
-                        ],
+                        ),
+                        title: Text(
+                          cartItem['title'].toString(),
+                          style: Theme.of(context).textTheme.titleMedium,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        subtitle: Text(
+                          'Author: ${cartItem['Author']}',
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                        trailing: IconButton(
+                          onPressed: () {
+                            // Handle bookmark removal
+                          },
+                          icon: const Icon(
+                            Icons.remove_circle,
+                            color: Colors.red,
+                            size: 28,
+                          ),
+                        ),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: Icon(
-                        Icons.remove_circle,
-                        color: Colors.red,
-                        size: 35,
-                      ),
-                    ),
-                  ],
+                  );
+                },
+              )
+            : const Center(
+                child: Text(
+                  "No bookmarks found.",
+                  style: TextStyle(fontSize: 18),
                 ),
               ),
-            );
-          },
-        ),
       ),
     );
   }

@@ -39,11 +39,9 @@ class _NewsDetailsPageState extends State<NewsDetailsPage> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        controller:
-            _scrollController, // Attach ScrollController to the scrollable widget
+        controller: _scrollController,
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start, // Align text to the left
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Displaying the news image
             Center(

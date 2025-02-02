@@ -7,7 +7,7 @@ void showOTPDialog({
 }) {
   showDialog(
     context: context,
-    barrierDismissible: false,
+    barrierDismissible: true,
     builder: (context) => AlertDialog(
       title: const Text("Enter OTP"),
       content: Column(
