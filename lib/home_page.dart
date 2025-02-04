@@ -1,5 +1,4 @@
 import 'package:check_news/add_news.dart';
-import 'package:check_news/admin_page.dart';
 import 'package:check_news/bookmars.dart';
 import 'package:check_news/global_news.dart';
 import 'package:check_news/news_list.dart';

@@ -1,44 +1,22 @@
-import 'package:check_news/services/firebase_auth_method.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
-class PhoneScreen extends StatefulWidget {
-  static String routeName = '/phone';
-  const PhoneScreen({super.key});
+class UploadImage extends StatefulWidget {
+  const UploadImage({super.key});
 
   @override
-  State<PhoneScreen> createState() => _PhoneScreenState();
+  State<UploadImage> createState() => _UploadImageState();
 }
 
-class _PhoneScreenState extends State<PhoneScreen> {
-  final TextEditingController phoneController = TextEditingController();
-
-  @override
-  void dispose() {
-    super.dispose();
-    phoneController.dispose();
-  }
-
+class _UploadImageState extends State<UploadImage> {
   @override
   Widget build(BuildContext context) {
+    final selectedFile=ModalRoute.of(context)!.settings.arguments as FilePickerResult;
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          TextField(
-            controller: phoneController,
-            // hintText: 'Enter phone number',
-          ),
-          IconButton(
-            onPressed: () {
-              context
-                  .read<FirebaseAuthMethods>()
-                  .phoneSignIn(context, phoneController.text);
-            },
-            icon: Icon(Icons.one_k),
-          ),
-        ],
+      appBar: AppBar(
+        title: Text("Upload"),
       ),
+      
     );
   }
 }

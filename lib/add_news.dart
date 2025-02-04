@@ -1,6 +1,8 @@
-import 'package:check_news/screens/image_post.dart';
+import 'package:check_news/select_image.dart';
+import 'package:check_news/services/cloudinary_services.dart';
 import 'package:check_news/services/storage/storage_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -16,36 +18,95 @@ class _AddNewsState extends State<AddNews> {
   final TextEditingController _titlecontroller = TextEditingController();
   final TextEditingController _contentcontroller = TextEditingController();
 
-  String? _imageUrl;
   final String _defaultImageUrl =
       "https://i.ibb.co/CtjXmQ7/Adobe-Stock-245562438-scaled.jpg"; // Replace with your default image URL
 
-  Future<void> uploadNewsToDb(String imageUrl) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-
-      // Fetch user's name from Firestore
-      final userDoc = await FirebaseFirestore.instance.collection("users").doc(user.uid).get();
-      final userName = userDoc.data()?['name'] ?? "Unknown";
-
-      final data = await FirebaseFirestore.instance.collection("news").add({
-        "title": _titlecontroller.text.trim(),
-        "content": _contentcontroller.text.trim(),
-        "image": imageUrl,
-        "Author": userName,
-        "Date": FieldValue.serverTimestamp(),
-        "approve": "pending"
-      });
-      print("News uploaded with ID: ${data.id}");
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("News posted successfully!")));
-    } catch (e) {
-      print("Error uploading news: $e");
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Failed to post news: $e")));
-    }
+  Future<FilePickerResult?> pickImage() async {
+    FilePickerResult? result =
+        await FilePicker.platform.pickFiles(type: FileType.image);
+    return result; // Return the selected file
   }
+
+  // Future<void> uploadNewsToDb(FilePickerResult? filePickerResult) async {
+  //   try {
+  //     final user = FirebaseAuth.instance.currentUser;
+  //     if (user == null) return;
+
+  //     if (_titlecontroller.text.trim().isEmpty ||
+  //         _contentcontroller.text.trim().isEmpty) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text("Title and content cannot be empty!")),
+  //       );
+  //       return;
+  //     }
+
+  //     final userDoc = await FirebaseFirestore.instance
+  //         .collection("users")
+  //         .doc(user.uid)
+  //         .get();
+  //     final userName = userDoc.data()?['name'] ?? "Unknown";
+
+  //     // Show loading indicator
+  //     showDialog(
+  //       context: context,
+  //       barrierDismissible: false,
+  //       builder: (context) {
+  //         return const AlertDialog(
+  //           title: Text("Uploading News"),
+  //           content: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             children: [
+  //               CircularProgressIndicator(),
+  //               SizedBox(height: 10),
+  //               Text("Please wait..."),
+  //             ],
+  //           ),
+  //         );
+  //       },
+  //     );
+
+  //     // Add news entry first to get the document ID (newsId)
+  //     final newsRef = await FirebaseFirestore.instance.collection("news").add({
+  //       "title": _titlecontroller.text.trim(),
+  //       "content": _contentcontroller.text.trim(),
+  //       "author": userName,
+  //       "date": FieldValue.serverTimestamp(),
+  //       "approve": "pending",
+  //       "image": "", // Placeholder
+  //     });
+
+  //     final String newsId = newsRef.id;
+
+  //     // Upload image if selected
+  //     String imageUrl = _defaultImageUrl;
+  //     if (filePickerResult != null) {
+  //       CloudinaryService cloudinaryService = CloudinaryService();
+  //       final uploadedUrl = await cloudinaryService
+  //           .uploadToCloudinary(filePickerResult, newsId: newsId);
+  //       if (uploadedUrl != null) {
+  //         imageUrl = uploadedUrl;
+  //       }
+  //     }
+
+  //     // Update the news entry with the image URL
+  //     await newsRef.update({"image": imageUrl});
+
+  //     // Dismiss loading dialog
+  //     Navigator.pop(context);
+
+  //     print("News uploaded with ID: $newsId");
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text("News posted successfully!")));
+  //   } catch (e) {
+  //     print("Error uploading news: $e");
+
+  //     // Dismiss loading dialog in case of error
+  //     Navigator.pop(context);
+
+  //     ScaffoldMessenger.of(context)
+  //         .showSnackBar(SnackBar(content: Text("Failed to post news: $e")));
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -66,14 +127,6 @@ class _AddNewsState extends State<AddNews> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ImagePost(
-                onImageUpload: (url) {
-                  setState(() {
-                    _imageUrl = url;
-                  });
-                },
-              ),
-              const SizedBox(height: 20),
               TextField(
                 controller: _titlecontroller,
                 decoration: InputDecoration(
@@ -95,9 +148,9 @@ class _AddNewsState extends State<AddNews> {
                     labelStyle: TextStyle(
                         color: Theme.of(context).colorScheme.primary)),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 26),
               SizedBox(
-                height: 280, // Adjust height for the content box
+                height: 500, // Adjust height for the content box
                 child: TextField(
                   controller: _contentcontroller,
                   maxLines: null,
@@ -126,30 +179,26 @@ class _AddNewsState extends State<AddNews> {
                 ),
               ),
               const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text("Confirm to Post"),
-                          content: const Text(
-                              "Your content of news will be uploaded"),
-                          actions: [
-                            TextButton(
-                              onPressed: () async {
-                                final imageUrlToUse =
-                                    _imageUrl ?? _defaultImageUrl;
+              ElevatedButton(
+                onPressed: () {
+                  if (_titlecontroller.text.trim().isEmpty ||
+                      _contentcontroller.text.trim().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text("Title and content cannot be empty!")),
+                    );
+                    return;
+                  }
 
-                                await uploadNewsToDb(imageUrlToUse);
-
-                                Navigator.pop(context); // Close the dialog
-                              },
-                              child: const Text("OK"),
-                            ),
-                          ],
-                        );
-                      });
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SelectImageScreen(
+                        title: _titlecontroller.text.trim(),
+                        content: _contentcontroller.text.trim(),
+                      ),
+                    ),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -157,13 +206,9 @@ class _AddNewsState extends State<AddNews> {
                   backgroundColor: Theme.of(context).colorScheme.secondary,
                   foregroundColor: Theme.of(context).colorScheme.tertiary,
                 ),
-                label: const Text("POST",
+                child: const Text("Next",
                     style:
                         TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                icon: const Icon(
-                  Icons.send,
-                  color: Colors.white,
-                ),
               ),
             ],
           ),

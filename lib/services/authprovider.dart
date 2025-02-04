@@ -6,17 +6,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthProvider extends ChangeNotifier {
   firebase_auth.User? _user;
   String _role = 'User'; // Default role
+  bool _isLoading = true;
 
   firebase_auth.User? get user => _user;
   String get role => _role;
   bool get isLoggedIn => _user != null;
+  bool get isLoading => _isLoading;
 
   AuthProvider() {
     _checkUser(); // Check user state when AuthProvider is created
   }
 
   Future<void> _checkUser() async {
-    firebase_auth.FirebaseAuth.instance.authStateChanges().listen((firebase_auth.User? user) async {
+    firebase_auth.FirebaseAuth.instance
+        .authStateChanges()
+        .listen((firebase_auth.User? user) async {
       _user = user;
       if (_user != null) {
         // Fetch stored role first for fast loading
@@ -29,6 +33,7 @@ class AuthProvider extends ChangeNotifier {
           await _fetchUserRole();
         }
       }
+      _isLoading = false;
       notifyListeners();
     });
   }
@@ -81,8 +86,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-
-
 
 // import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 // import 'package:flutter/material.dart';

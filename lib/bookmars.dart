@@ -1,9 +1,42 @@
-import 'package:check_news/global_news.dart';
 import 'package:check_news/news_details_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class BookmarksPages extends StatelessWidget {
+class BookmarksPages extends StatefulWidget {
   const BookmarksPages({super.key});
+
+  @override
+  State<BookmarksPages> createState() => _BookmarksPagesState();
+}
+
+class _BookmarksPagesState extends State<BookmarksPages> {
+  final String userId = FirebaseAuth.instance.currentUser!.uid;
+  List<String> bookmarkedNewsIds = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchBookmarkedNewsIds();
+  }
+
+  /// Fetch bookmarked news IDs from the user's document in Firestore
+  Future<void> fetchBookmarkedNewsIds() async {
+    try {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+
+      if (userDoc.exists && userDoc.data() != null) {
+        setState(() {
+          bookmarkedNewsIds = List<String>.from(userDoc['bookmarks'] ?? []);
+        });
+      }
+    } catch (e) {
+      print("Error fetching bookmarks: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,73 +48,87 @@ class BookmarksPages extends StatelessWidget {
             style: TextStyle(color: Color.fromRGBO(0, 223, 130, 1))),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: news.isNotEmpty
-            ? ListView.builder(
-                itemCount: news.length,
-                itemBuilder: (context, index) {
-                  final cartItem = news[index];
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => NewsDetailsPage(
-                            newsContent: cartItem,
+      body: bookmarkedNewsIds.isEmpty
+          ? const Center(
+              child: Text("No bookmarks available"),
+            )
+          : StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('news')
+                  .where(FieldPath.documentId, whereIn: bookmarkedNewsIds)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const Center(child: Text("Error loading news!"));
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text("No bookmarks available"));
+                }
+
+                var bookmarkedNews = snapshot.data!.docs;
+
+                return ListView.builder(
+                  itemCount: bookmarkedNews.length,
+                  itemBuilder: (context, index) {
+                    final newsItem = bookmarkedNews[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NewsDetailsPage(
+                              id: newsItem.id,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        color: Theme.of(context).colorScheme.secondary,
+                        margin: const EdgeInsets.all(8.0),
+                        child: ListTile(
+                          title: Text(
+                            newsItem['title'] ?? 'No Title',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(newsItem['author'] ?? 'Unknown Author'),
+                          trailing: IconButton(
+                            onPressed: () async {
+                              await removeBookmark(newsItem.id);
+                            },
+                            icon: const Icon(
+                              Icons.bookmark_remove,
+                              color: Colors.red,
+                              size: 28,
+                            ),
                           ),
                         ),
-                      );
-                    },
-                    child: Card(
-                      color: Theme.of(context).colorScheme.secondary,
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 8.0, horizontal: 8.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: ListTile(
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.asset(
-                            cartItem['imageUrl'] as String,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        title: Text(
-                          cartItem['title'].toString(),
-                          style: Theme.of(context).textTheme.titleMedium,
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                        subtitle: Text(
-                          'Author: ${cartItem['Author']}',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                        ),
-                        trailing: IconButton(
-                          onPressed: () {
-                            // Handle bookmark removal
-                          },
-                          icon: const Icon(
-                            Icons.remove_circle,
-                            color: Colors.red,
-                            size: 28,
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              )
-            : const Center(
-                child: Text(
-                  "No bookmarks found.",
-                  style: TextStyle(fontSize: 18),
-                ),
-              ),
-      ),
+                    );
+                  },
+                );
+              },
+            ),
     );
+  }
+
+  /// Remove a news ID from the user's bookmarks in Firestore
+  Future<void> removeBookmark(String newsId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({
+        'bookmarks': FieldValue.arrayRemove([newsId])
+      });
+
+      setState(() {
+        bookmarkedNewsIds.remove(newsId);
+      });
+    } catch (e) {
+      print("Error removing bookmark: $e");
+    }
   }
 }

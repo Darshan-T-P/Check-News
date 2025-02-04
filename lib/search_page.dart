@@ -1,4 +1,5 @@
 import 'package:check_news/news_details_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class SearchPage extends StatefulWidget {
@@ -11,31 +12,61 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  late TextEditingController _searchController;
-  List<Map<String, dynamic>> filteredNews = [];
+  final TextEditingController _searchController = TextEditingController();
+  List _allResult = [];
+  List _filteredNews = [];
+  getNewsStream() async {
+    var data = await FirebaseFirestore.instance
+        .collection('news')
+        .orderBy('title')
+        .get();
+
+    setState(() {
+      _allResult = data.docs;
+    });
+
+    filterNews();
+  }
 
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
-    filteredNews = widget.newsList; // Initially show all news
+    _searchController.addListener(_onSearchChange);
   }
 
-  void _filterNews(String query) {
-    final filtered = widget.newsList
-        .where((news) =>
-            news['title']!.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+  _onSearchChange() {
+    filterNews();
+  }
+
+  filterNews() {
+    var showResult = [];
+    if (_searchController.text != "") {
+      for (var newsSnapShot in _allResult) {
+        var title = newsSnapShot['title'].toString().toLowerCase();
+        if (title.contains(_searchController.text.toLowerCase())) {
+          showResult.add(newsSnapShot);
+        }
+      }
+    } else {
+      showResult = List.from(_allResult);
+    }
 
     setState(() {
-      filteredNews = filtered;
+      _filteredNews = showResult;
     });
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchChange);
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    getNewsStream();
+    super.didChangeDependencies();
   }
 
   @override
@@ -44,7 +75,8 @@ class _SearchPageState extends State<SearchPage> {
       backgroundColor: Theme.of(context).colorScheme.tertiary,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.primary,
-        title: const Text("Search News",
+        title: 
+         const Text("Search News",
             style: TextStyle(color: Color.fromRGBO(0, 223, 130, 1))),
         centerTitle: true,
       ),
@@ -54,7 +86,6 @@ class _SearchPageState extends State<SearchPage> {
             padding: const EdgeInsets.all(12.0),
             child: TextField(
               controller: _searchController,
-              onChanged: _filterNews,
               decoration: InputDecoration(
                 hintText: "Search news by title...",
                 prefixIcon: const Icon(
@@ -83,47 +114,64 @@ class _SearchPageState extends State<SearchPage> {
               ),
             ),
           ),
-          Expanded(
-            child: filteredNews.isNotEmpty
-                ? ListView.builder(
-                    itemCount: filteredNews.length,
-                    itemBuilder: (context, index) {
-                      final news = filteredNews[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => NewsDetailsPage(
-                                newsContent: news,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Card(
-                          color: Theme.of(context).colorScheme.secondary,
-                          margin: const EdgeInsets.all(8.0),
-                          child: ListTile(
-                            title: Text(
-                              news['title'] ?? 'No Title',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              news['Author'] ?? 'Unknown Author',
-                            ),
+          StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                    .collection("news")
+                    .where('approve', isEqualTo: 'approved')
+                    .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return const Center(
+                      child: Text("Error loading news!"),
+                    );
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text("No news available"),
+                    );
+                  }
+
+              return Expanded(
+                  child: ListView.builder(
+                itemCount: _filteredNews.length,
+                itemBuilder: (context, index) {
+                  
+                  final news = _filteredNews[index];
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NewsDetailsPage(
+                            id: news.id,
                           ),
                         ),
                       );
                     },
-                  )
-                : const Center(
-                    child: Text(
-                      "No results found.",
-                      style: TextStyle(fontSize: 18),
+                    child: Card(
+                      color: Theme.of(context).colorScheme.secondary,
+                      margin: const EdgeInsets.all(8.0),
+                      child: ListTile(
+                        title: Text(
+                          news['title'] ?? 'No Title',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          news['author'] ?? 'Unknown Author',
+                        ),
+                      ),
                     ),
-                  ),
+                  );
+                },
+              ));
+            }
           ),
         ],
       ),

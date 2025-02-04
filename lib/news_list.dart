@@ -1,5 +1,6 @@
 import 'package:check_news/global_news.dart';
 import 'package:check_news/news_cart.dart';
+import 'package:check_news/news_details_page.dart';
 import 'package:check_news/profile_pages.dart';
 import 'package:check_news/search_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -133,7 +134,9 @@ class _NewsListState extends State<NewsList> {
                 // Modify the Firestore query to filter out pending approvals
                 stream: FirebaseFirestore.instance
                     .collection("news")
-                    .where('approve', isEqualTo: 'approved') // Only show approved news
+                    .where('approve', isEqualTo: 'approved')
+                    .orderBy('date',descending: true)
+                    // Only show approved news
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -155,26 +158,34 @@ class _NewsListState extends State<NewsList> {
                   return ListView.builder(
                     itemCount: snapshot.data!.docs.length,
                     itemBuilder: (context, index) {
-                      final news = snapshot.data!.docs[index].data()
-                          as Map<String, dynamic>;
+                      final doc = snapshot.data!.docs[index];
+                      final news = doc.data() as Map<String, dynamic>;
 
                       return GestureDetector(
                         onTap: () {
-                          // Navigator.of(context).push(
-                          //   MaterialPageRoute(
-                          //     builder: (context) => NewsDetailsPage(
-                          //       newsContent: news,
-                          //     ),
-                          //   ),
-                          // );
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => NewsDetailsPage(
+                                id: doc.id,
+                              ),
+                            ),
+                          );
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: NewsCart(
+                            id: doc.id,
                             title: news['title'] ?? 'No Title',
-                            time: news['Date'] ?? 'No Date',
-                            image: news['image'] ?? 'No image Data',
-                            author: news['Author'] ?? 'Anonymous',
+                            time: news['date'] is Timestamp
+                                ? news['date'].toDate()
+                                : 'No Date',
+                            image: news['images'] is List
+                                ? news['images'].isNotEmpty
+                                    ? news['images'][0]
+                                    : 'No image Data'
+                                : news['images'] ?? 'No image Data',
+                            author: news['author'],
+                            likes: [],
                           ),
                         ),
                       );

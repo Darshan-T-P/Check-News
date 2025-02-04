@@ -1,5 +1,7 @@
+import 'package:check_news/services/storage/storage_services.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:check_news/services/authprovider.dart';
 import 'package:check_news/admin_home.dart';
@@ -9,11 +11,12 @@ import 'package:check_news/route/login.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
+  await dotenv.load(fileName: ".env");
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => StorageServices())
       ],
       child: MyApp(),
     ),
@@ -60,23 +63,26 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
+      routes: {
+        '/home':(context)=>HomePage(),
+        '/AdminHome':(context)=>AdminHome(),
+      },
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
-          if (authProvider.user == null) {
-            return LoginPage(); // Show LoginPage if user is not logged in
-          }
+           if (authProvider.isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()), // Show loading screen
+      );
+    }
 
-          // Check role and navigate accordingly
-          if (authProvider.role == 'User') {
-            return HomePage(); // Navigate to HomePage if role is 'User'
-          } else if (authProvider.role == 'Admin') {
-            return AdminHome(); // Navigate to AdminHome if role is 'Admin'
-          } else {
-            return Center(child: CircularProgressIndicator()); // Show loading while fetching role
-          }
+    if (authProvider.user == null) {
+      return LoginPage(); // Show login only if no user is found
+    }
+
+    return authProvider.role == 'Admin' ? AdminHome() : HomePage();
         },
       ),
+      
     );
   }
 }
-
