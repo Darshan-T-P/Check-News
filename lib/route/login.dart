@@ -6,9 +6,12 @@ import 'package:check_news/utils/showSnackbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Alias for Firebase Auth
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Alias for Firebase Auth
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -21,13 +24,27 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController passwordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    
+     firebase_auth.FirebaseAuth.instance.authStateChanges().listen((firebase_auth.User? user) {
+    if (user != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()), // Replace with your home screen
+      );
+    }
+  });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           children: <Widget>[
             Container(
-              color: Colors.orangeAccent[700],
+              color: Theme.of(context).colorScheme.secondary,
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height * 0.70,
               child: Center(
@@ -47,8 +64,9 @@ class _LoginPageState extends State<LoginPage> {
                           decoration: InputDecoration(hintText: 'Email'),
                           validator: (value) {
                             if (value!.isEmpty) return "Email cannot be empty";
-                            if (!RegExp("^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+.[a-z]").hasMatch(value))
+                            if (!RegExp("^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+.[a-z]").hasMatch(value)) {
                               return "Please enter a valid email";
+                            }
                             return null;
                           },
                         ),
@@ -116,15 +134,37 @@ class _LoginPageState extends State<LoginPage> {
   //     showSnackBar(context, e.message!);
   //   }
   // }
-  void signIn(String email, String password) async {
+
+
+void signIn(String email, String password) async {
   final authProvider = Provider.of<AuthProvider>(context, listen: false);
   try {
     await authProvider.signIn(email, password);
-    // After the sign-in process, role will be updated in AuthProvider
+    firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      // Fetch user role from Firestore
+      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        String role = doc.get('role'); // Ensure it's "role", not "rool"
+
+        // Save role in SharedPreferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('userRole', role);
+
+        // Navigate based on role
+        if (role == "Admin") {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminHome()));
+        } else {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => HomePage()));
+        }
+      }
+    }
   } on firebase_auth.FirebaseAuthException catch (e) {
     showSnackBar(context, e.message!);
   }
 }
+
 
 
   void route() {

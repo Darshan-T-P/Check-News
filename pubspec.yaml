@@ -47,6 +47,8 @@ dependencies:
   file_picker: ^8.3.1
   shared_preferences: ^2.5.1
   lottie: ^3.3.1
+  liquid_pull_to_refresh: ^3.0.1
+  curved_navigation_bar: ^1.0.6
 
 dev_dependencies:
   flutter_test:

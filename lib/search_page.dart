@@ -71,109 +71,111 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.tertiary,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        title: 
-         const Text("Search News",
-            style: TextStyle(color: Color.fromRGBO(0, 223, 130, 1))),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: "Search news by title...",
-                prefixIcon: const Icon(
-                  Icons.search,
-                  size: 22,
-                  color: Colors.white,
-                ),
-                hintStyle: TextStyle(fontSize: 20, color: Colors.white),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                      color: Colors.transparent), // Default border
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                      color: Colors.white,
-                      width: 2.0), // White border when focused
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                      color: Colors
-                          .transparent), // Transparent border when not focused
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.tertiary,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          title: 
+           const Text("Search News",
+              style: TextStyle(color: Color.fromRGBO(0, 223, 130, 1))),
+          centerTitle: true,
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: "Search news by title...",
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    size: 22,
+                    color: Colors.white,
+                  ),
+                  hintStyle: TextStyle(fontSize: 20, color: Colors.white),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                        color: Colors.transparent), // Default border
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                        color: Colors.white,
+                        width: 2.0), // White border when focused
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(
+                        color: Colors
+                            .transparent), // Transparent border when not focused
+                  ),
                 ),
               ),
             ),
-          ),
-          StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                    .collection("news")
-                    .where('approve', isEqualTo: 'approved')
-                    .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                  if (snapshot.hasError) {
-                    return const Center(
-                      child: Text("Error loading news!"),
-                    );
-                  }
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(
-                      child: Text("No news available"),
-                    );
-                  }
-
-              return Expanded(
-                  child: ListView.builder(
-                itemCount: _filteredNews.length,
-                itemBuilder: (context, index) {
-                  
-                  final news = _filteredNews[index];
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => NewsDetailsPage(
-                            id: news.id,
-                          ),
-                        ),
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                      .collection("news")
+                      .where('approve', isEqualTo: 'approved')
+                      .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                        child: CircularProgressIndicator(),
                       );
-                    },
-                    child: Card(
-                      color: Theme.of(context).colorScheme.secondary,
-                      margin: const EdgeInsets.all(8.0),
-                      child: ListTile(
-                        title: Text(
-                          news['title'] ?? 'No Title',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
+                    }
+                    if (snapshot.hasError) {
+                      return const Center(
+                        child: Text("Error loading news!"),
+                      );
+                    }
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: Text("No news available"),
+                      );
+                    }
+      
+                return Expanded(
+                    child: ListView.builder(
+                  itemCount: _filteredNews.length,
+                  itemBuilder: (context, index) {
+                    
+                    final news = _filteredNews[index];
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => NewsDetailsPage(
+                              id: news.id,
+                            ),
                           ),
-                        ),
-                        subtitle: Text(
-                          news['author'] ?? 'Unknown Author',
+                        );
+                      },
+                      child: Card(
+                        color: Theme.of(context).colorScheme.secondary,
+                        margin: const EdgeInsets.all(8.0),
+                        child: ListTile(
+                          title: Text(
+                            news['title'] ?? 'No Title',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            news['author'] ?? 'Unknown Author',
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
-              ));
-            }
-          ),
-        ],
+                    );
+                  },
+                ));
+              }
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -95,7 +95,7 @@ class _NewsCartState extends State<NewsCart> {
           clipBehavior: Clip.none,
           children: [
             Container(
-              height: height * 0.3,
+              height: height * 0.32,
               width: width * 0.9,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -148,8 +148,8 @@ class _NewsCartState extends State<NewsCart> {
               left: 0,
               right: 0,
               child: Container(
-                height: 70,
-                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                height: height*0.1,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.9),
                   borderRadius: const BorderRadius.vertical(
@@ -158,6 +158,7 @@ class _NewsCartState extends State<NewsCart> {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       widget.title,

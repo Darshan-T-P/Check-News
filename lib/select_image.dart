@@ -18,10 +18,9 @@ class SelectImageScreen extends StatefulWidget {
 }
 
 class _SelectImageScreenState extends State<SelectImageScreen> {
-  List<FilePickerResult?> _filePickerResults = [];
-  List<String?> _imagePaths = [];
+  final List<FilePickerResult?> _filePickerResults = [];
+  final List<String?> _imagePaths = [];
   bool _isUploading = false;
-
 
   Future<void> pickImages() async {
     FilePickerResult? result = await FilePicker.platform
@@ -38,7 +37,6 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
     }
   }
 
-
   void removeImage(int index) {
     setState(() {
       _imagePaths.removeAt(index);
@@ -46,7 +44,6 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
     });
   }
 
-  
   Future<void> uploadNewsToDb() async {
     setState(() {
       _isUploading = true;
@@ -56,7 +53,6 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
-     
       final userDoc = await FirebaseFirestore.instance
           .collection("users")
           .doc(user.uid)
@@ -70,7 +66,7 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
         "date": FieldValue.serverTimestamp(),
         "likes": [],
         "approve": "pending",
-        "images": [], // Will update later if images exist
+        "images": [],
       });
 
       final String newsId = newsRef.id;
@@ -78,7 +74,6 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
       List<String> uploadedUrls = [];
 
       if (_filePickerResults.isNotEmpty && _imagePaths.isNotEmpty) {
-        
         for (var fileResult in _filePickerResults) {
           final uploadedUrl =
               await cloudinaryService.uploadToCloudinary(fileResult!, newsId);
@@ -88,10 +83,12 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
         }
       }
 
-      // Update Firestore with uploaded image URLs if any exist
       if (uploadedUrls.isNotEmpty) {
         await newsRef.update({"images": uploadedUrls});
       }
+
+      // Wait for animation to finish before navigating back
+      await Future.delayed(const Duration(seconds: 3));
 
       setState(() {
         _isUploading = false;
@@ -101,8 +98,10 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
         const SnackBar(content: Text("News posted successfully!")),
       );
 
-      // Navigate back to home screen
-      Navigator.popUntil(context, (route) => route.isFirst);
+      // Navigate back only after animation completes
+      if (mounted) {
+        Navigator.popUntil(context, (route) => route.isFirst);
+      }
     } catch (e) {
       setState(() {
         _isUploading = false;
@@ -142,8 +141,7 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 5.0),
                             child: Image.file(File(_imagePaths[index]!),
-                                height: 200, 
-                                fit: BoxFit.contain),
+                                height: 200, fit: BoxFit.contain),
                           ),
                           Positioned(
                             top: 5,
@@ -179,7 +177,7 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
               ),
               child: const Text("Select Images"),
             ),
-             const SizedBox(height: 100),
+            const SizedBox(height: 100),
             ElevatedButton(
               onPressed: uploadNewsToDb,
               style: ElevatedButton.styleFrom(
@@ -197,8 +195,16 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
             _isUploading
                 ? Column(
                     children: [
-                      Lottie.asset('assets/animations/uploading.json',
-                          height: 150),
+                      Lottie.asset(
+                        'assets/images/loding.json',
+                        height: 200,
+                        width: 200,
+                        onLoaded: (composition) {
+                          if (composition.duration == 0) {
+                            debugPrint("Lottie animation has an issue.");
+                          }
+                        },
+                      ),
                       const SizedBox(height: 10),
                       const Text("Uploading... Please wait",
                           style: TextStyle(
@@ -208,7 +214,8 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
                 : ElevatedButton.icon(
                     onPressed: uploadNewsToDb,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16,horizontal: 80),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 16, horizontal: 80),
                       textStyle: const TextStyle(fontSize: 18),
                       backgroundColor: Theme.of(context).colorScheme.secondary,
                       foregroundColor: Colors.white,

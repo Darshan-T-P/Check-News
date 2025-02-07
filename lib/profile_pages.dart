@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:check_news/services/authprovider.dart';
 import 'package:flutter/material.dart';
@@ -13,18 +12,6 @@ class ProfilePages extends StatefulWidget {
 }
 
 class _ProfilePagesState extends State<ProfilePages> {
-  FilePickerResult? _filePickerResult;
-
-  void _openFilePicker() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      allowMultiple: false,
-      allowedExtensions: ["jpg", "jpeg", "png", "mp4"],
-      type: FileType.custom,
-    );
-    setState(() {
-      _filePickerResult = result;
-    });
-  }
 
   late final TextEditingController _changenamecontroller =
       TextEditingController();

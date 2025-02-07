@@ -5,8 +5,10 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class CloudinaryService {
-  Future<String?> uploadToCloudinary(FilePickerResult filePickerResult, String newsId) async {
-    if (filePickerResult.files.isEmpty || filePickerResult.files.single.path == null) {
+  Future<String?> uploadToCloudinary(
+      FilePickerResult filePickerResult, String newsId) async {
+    if (filePickerResult.files.isEmpty ||
+        filePickerResult.files.single.path == null) {
       print("No files selected or invalid path");
       return null;
     }
@@ -22,7 +24,8 @@ class CloudinaryService {
       return null;
     }
 
-    var uri = Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
+    var uri =
+        Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/upload");
 
     var request = http.MultipartRequest("POST", uri);
 
@@ -31,10 +34,9 @@ class CloudinaryService {
     // Add required fields
     request.fields['upload_preset'] = uploadPreset;
 
-    if (newsId != null) {
-      request.fields['folder'] = "news/$newsId"; // Organize images under the news ID folder
-    }
-
+    request.fields['folder'] ="news/$newsId"; 
+    request.fields['timestamp'] =(DateTime.now().millisecondsSinceEpoch ~/ 1000).toString();
+    request.fields['expires_at'] =((DateTime.now().add(Duration(days: 40)).millisecondsSinceEpoch ~/1000)).toString();
     try {
       var response = await request.send();
       var responseBody = await response.stream.bytesToString();
@@ -53,4 +55,32 @@ class CloudinaryService {
       return null;
     }
   }
+
+  Future<bool> deleteFromCloudinary(String publicId) async {
+  String cloudName = dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
+  String apiKey = dotenv.env['CLOUDINARY_API_KEY'] ?? '';
+  String apiSecret = dotenv.env['CLOUDINARY_API_SECRET'] ?? '';
+
+  if (cloudName.isEmpty || apiKey.isEmpty || apiSecret.isEmpty) {
+    print("Cloudinary credentials are missing");
+    return false;
+  }
+
+  var url = Uri.parse("https://api.cloudinary.com/v1_1/$cloudName/image/destroy");
+
+  var response = await http.post(url, body: {
+    'public_id': publicId,
+    'api_key': apiKey,
+    'api_secret': apiSecret,
+  });
+
+  if (response.statusCode == 200) {
+    print("Successfully deleted: $publicId");
+    return true;
+  } else {
+    print("Failed to delete: $publicId");
+    return false;
+  }
+}
+
 }

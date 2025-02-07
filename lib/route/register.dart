@@ -12,7 +12,6 @@ class Register extends StatefulWidget {
 
 class _RegisterState extends State<Register> {
   bool showProgress = false;
-  bool visible = false;
   final _formkey = GlobalKey<FormState>();
   final _auth = FirebaseAuth.instance;
 
@@ -23,7 +22,7 @@ class _RegisterState extends State<Register> {
   final TextEditingController mobileController = TextEditingController();
   bool _isObscure = true;
   bool _isObscure2 = true;
-  
+
   var options = ['User', 'Admin'];
   var _currentItemSelected = "User";
   var role = "User";
@@ -31,98 +30,73 @@ class _RegisterState extends State<Register> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.orange[900],
+      backgroundColor: Theme.of(context).colorScheme.tertiary,
       body: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            Container(
-              color: Colors.orangeAccent[700],
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
-              child: SingleChildScrollView(
-                child: Container(
-                  margin: EdgeInsets.all(12),
-                  child: Form(
-                    key: _formkey,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(height: 80),
-                        Text(
-                          "Register Now",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            fontSize: 40,
-                          ),
-                        ),
-                        SizedBox(height: 50),
-                        buildTextField(nameController, "Name", TextInputType.name),
-                        SizedBox(height: 20),
-                        buildTextField(mobileController, "Phone", TextInputType.phone),
-                        SizedBox(height: 20),
-                        buildTextField(emailController, "Email", TextInputType.emailAddress),
-                        SizedBox(height: 20),
-                        buildPasswordField(passwordController, "Password", _isObscure, () {
-                          setState(() {
-                            _isObscure = !_isObscure;
-                          });
-                        }),
-                        SizedBox(height: 20),
-                        buildPasswordField(confirmpassController, "Confirm Password", _isObscure2, () {
-                          setState(() {
-                            _isObscure2 = !_isObscure2;
-                          });
-                        }),
-                        SizedBox(height: 20),
-                        buildRoleDropdown(),
-                        SizedBox(height: 20),
-                        buildButtons(),
-                        SizedBox(height: 20),
-                        Text(
-                          "WEBFUN",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 30,
-                            color: Colors.yellowAccent[400],
-                          ),
-                        ),
-                      ],
-                    ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Form(
+            key: _formkey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 80),
+                const Text(
+                  "Register Now",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 40,
                   ),
                 ),
-              ),
+                const SizedBox(height: 50),
+                buildTextField(nameController, "Name", TextInputType.name),
+                const SizedBox(height: 20),
+                buildTextField(mobileController, "Phone", TextInputType.phone),
+                const SizedBox(height: 20),
+                buildTextField(
+                    emailController, "Email", TextInputType.emailAddress),
+                const SizedBox(height: 20),
+                buildPasswordField(passwordController, "Password", _isObscure,
+                    () {
+                  setState(() => _isObscure = !_isObscure);
+                }),
+                const SizedBox(height: 20),
+                buildPasswordField(
+                    confirmpassController, "Confirm Password", _isObscure2, () {
+                  setState(() => _isObscure2 = !_isObscure2);
+                }),
+                const SizedBox(height: 20),
+                buildRoleDropdown(),
+                const SizedBox(height: 20),
+                buildButtons(),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget buildTextField(TextEditingController controller, String hint, TextInputType type) {
+  Widget buildTextField(
+      TextEditingController controller, String hint, TextInputType type) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white,
         hintText: hint,
-        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.white),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.white),
-          borderRadius: BorderRadius.circular(20),
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
       ),
       keyboardType: type,
-      validator: (value) => value!.isEmpty ? "$hint cannot be empty" : null,
+      validator: (value) =>
+          value!.trim().isEmpty ? "$hint cannot be empty" : null,
     );
   }
 
-  Widget buildPasswordField(TextEditingController controller, String hint, bool isObscure, VoidCallback toggle) {
+  Widget buildPasswordField(TextEditingController controller, String hint,
+      bool isObscure, VoidCallback toggle) {
     return TextFormField(
       controller: controller,
       obscureText: isObscure,
@@ -134,17 +108,15 @@ class _RegisterState extends State<Register> {
         filled: true,
         fillColor: Colors.white,
         hintText: hint,
-        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.white),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: Colors.white),
-          borderRadius: BorderRadius.circular(20),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      validator: (value) => value!.length < 6 ? "Minimum 6 characters required" : null,
+      validator: (value) {
+        if (value!.trim().isEmpty) return "$hint cannot be empty";
+        if (hint == "Confirm Password" && value != passwordController.text) {
+          return "Passwords do not match";
+        }
+        return null;
+      },
     );
   }
 
@@ -152,33 +124,22 @@ class _RegisterState extends State<Register> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
+        const Text(
           "Role : ",
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         DropdownButton<String>(
           dropdownColor: Colors.blue[900],
-          isDense: true,
           iconEnabledColor: Colors.white,
-          items: options.map((String dropDownStringItem) {
-            return DropdownMenuItem<String>(
-              value: dropDownStringItem,
-              child: Text(
-                dropDownStringItem,
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 20),
-              ),
-            );
-          }).toList(),
-          onChanged: (newValueSelected) {
-            setState(() {
-              _currentItemSelected = newValueSelected!;
-              role = newValueSelected;
-            });
-          },
+          items: options
+              .map((String item) =>
+                  DropdownMenuItem(value: item, child: Text(item)))
+              .toList(),
+          onChanged: (newValue) => setState(() {
+            _currentItemSelected = newValue!;
+            role = newValue;
+          }),
           value: _currentItemSelected,
         ),
       ],
@@ -189,11 +150,11 @@ class _RegisterState extends State<Register> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        buildButton("Login", () => Navigator.push(context, MaterialPageRoute(builder: (context) => LoginPage()))),
-        buildButton("Register", () {
-          setState(() => showProgress = true);
-          signUp();
-        }),
+        buildButton(
+            "Login",
+            () => Navigator.push(
+                context, MaterialPageRoute(builder: (context) => LoginPage()))),
+        buildButton("Register", signUp),
       ],
     );
   }
@@ -205,24 +166,43 @@ class _RegisterState extends State<Register> {
       height: 40,
       onPressed: onPressed,
       color: Colors.white,
-      child: Text(text, style: TextStyle(fontSize: 20)),
+      child: Text(text, style: const TextStyle(fontSize: 20)),
     );
   }
 
   void signUp() async {
     if (_formkey.currentState!.validate()) {
-      await _auth.createUserWithEmailAndPassword(email: emailController.text, password: passwordController.text)
-          .then((value) => postDetailsToFirestore());
+      setState(() => showProgress = true);
+      try {
+        UserCredential userCredential =
+            await _auth.createUserWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
+        await Future.delayed(Duration(seconds: 2));
+        postDetailsToFirestore(userCredential.user);
+      } on FirebaseAuthException catch (e) {
+        setState(() => showProgress = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.message ?? "Registration failed")));
+      }
     }
   }
 
-  postDetailsToFirestore() async {
-    FirebaseFirestore.instance.collection('users').doc(_auth.currentUser!.uid).set({
-      'name': nameController.text,
-      'phone': mobileController.text,
-      'email': emailController.text,
-      'role': role,
-    });
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginPage()));
+  void postDetailsToFirestore(User? user) async {
+    if (user != null) {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'name': nameController.text.trim(),
+        'phone': mobileController.text.trim(),
+        'email': emailController.text.trim(),
+        'role': role,
+      });
+       await _auth.signOut();
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => LoginPage()),
+        (Route<dynamic> route) => false,
+      );
+    }
   }
 }

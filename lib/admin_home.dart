@@ -3,6 +3,7 @@ import 'package:check_news/admin_page.dart';
 import 'package:check_news/bookmars.dart';
 import 'package:check_news/news_list.dart';
 import 'package:check_news/profile_pages.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
 
 class AdminHome extends StatefulWidget {
@@ -13,115 +14,54 @@ class AdminHome extends StatefulWidget {
 }
 
 class _AdminHomeState extends State<AdminHome> {
-  int currentPage = 0;
+int currentPage = 0;
 
   // Pages corresponding to bottom navigation bar
   final List<Widget> pages = [
     NewsList(),
     AdminPage(),
-    AddNews(),
     ProfilePages(),
     BookmarksPages(),
+  ];
+
+  final List<Widget> _navigationItem = [
+    const Icon(Icons.home, color: Colors.white),
+    const Icon(Icons.person_pin_sharp, color: Colors.white),
+    const Icon(Icons.person, color: Colors.white),
+    const Icon(Icons.bookmark, color: Colors.white),
   ];
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        // drawer: Drawer(
-        //   child: Column(
-        //     children: [
-        //       const DrawerHeader(
-        //         padding: EdgeInsets.all(20),
-        //         margin: EdgeInsets.all(10),
-        //         child: Text(
-        //           "Profile",
-        //           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        //         ),
-        //       ),
-        //       ListTile(
-        //         title: const Text("Add Content"),
-        //         leading: const Icon(Icons.add),
-        //         onTap: () {
-        //           Navigator.push(
-        //             context,
-        //             MaterialPageRoute(builder: (context) => AddNews()),
-        //           );
-        //         },
-        //       ),
-        //       ListTile(
-        //         title: const Text("Settings"),
-        //         leading: const Icon(Icons.settings),
-        //         onTap: () {
-        //           // Navigate to Settings Page (add your page here)
-        //         },
-        //       ),
-        //       ListTile(
-        //         title: const Text("Log out"),
-        //         leading: const Icon(Icons.logout),
-        //         onTap: () {
-        //           context.read<FirebaseAuthMethod>().signOut(context);
-        //           // Implement logout functionality here
-        //         },
-        //       )
-        //     ],
-        //   ),
-        // ),
-
         body: pages[currentPage], // Display the selected page dynamically
-        bottomNavigationBar: BottomNavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          currentIndex: currentPage,
-          onTap: (value) {
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: FloatingActionButton(
+          elevation: 6.0, // Gives a floating effect
+          splashColor: Colors.green.withOpacity(0.3), // Soft ripple effect
+          highlightElevation: 10.0, // Increases elevation on press
+          backgroundColor: Colors.white,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AddNews()),
+            );
+          },
+          child: const Icon(Icons.add,
+              color: Colors.black, size: 30), // Bigger icon
+        ),
+        bottomNavigationBar: CurvedNavigationBar(
+          backgroundColor: Theme.of(context).colorScheme.tertiary,
+          color: const Color.fromRGBO(3, 15, 15, 1),
+          items: _navigationItem,
+          height: 60,
+          animationDuration: const Duration(milliseconds: 500),
+          onTap: (index) {
             setState(() {
-              currentPage = value;
+              currentPage = index;
             });
           },
-          selectedIconTheme: const IconThemeData(
-            color:
-                Color.fromRGBO(0, 223, 130, 1), // Icon color for selected items
-          ),
-          unselectedIconTheme: const IconThemeData(
-            color:
-                Color.fromRGBO(3, 98, 76, 1), // Icon color for unselected items
-          ),
-          selectedItemColor:
-              Color.fromRGBO(0, 223, 130, 1), // Label color for selected items
-          unselectedItemColor:
-              Color.fromRGBO(3, 98, 76, 1), // Label color for unselected items
-          selectedLabelStyle: const TextStyle(
-            fontWeight: FontWeight.bold, // Styling for selected labels
-            fontSize: 14,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 12, // Styling for unselected labels
-          ),
-          type: BottomNavigationBarType.fixed, // Keeps all items visible
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.assignment_ind_outlined),
-              label: 'Admin',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(
-                Icons.add_circle_outline_rounded,
-                size: 30,
-              ),
-              label: 'Add',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Profile',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.bookmark),
-              label: 'Bookmarks',
-            ),
-          ],
         ),
       ),
     );
