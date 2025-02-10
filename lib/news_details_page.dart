@@ -2,7 +2,7 @@ import 'package:check_news/imagepage_view.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:timeago/timeago.dart' as timeago;
+import 'package:intl/intl.dart';
 
 class NewsDetailsPage extends StatefulWidget {
   final String id;
@@ -139,7 +139,10 @@ class _NewsDetailsPageState extends State<NewsDetailsPage> {
 
           Timestamp timestamp = newsData['date'];
           DateTime dateTime = timestamp.toDate();
-          String formattedTime = timeago.format(dateTime);
+
+// Format Date & Time
+          String formattedTime =
+              DateFormat("dd MMM yyyy ,  hh:mm a").format(dateTime);
 
           List<dynamic> likesList = newsData['likes'] ?? [];
           isLiked = likesList.contains(userId);
@@ -181,7 +184,8 @@ class _NewsDetailsPageState extends State<NewsDetailsPage> {
                                 child: Image.network(
                                   imageUrls[index],
                                   height: 350,
-                                  width: MediaQuery.of(context).size.width * 0.9,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.9,
                                   fit: BoxFit.cover,
                                 ),
                               ),

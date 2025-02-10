@@ -120,19 +120,20 @@ class _ProfilePagesState extends State<ProfilePages> {
     double width = MediaQuery.of(context).size.width;
     double height = MediaQuery.of(context).size.height;
 
-    return WillPopScope(
-      onWillPop: () {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    return //PopScope(
+    //   canPop: () {
+    //     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-        // Determine the correct home page based on user role
-        String homeRoute = authProvider.role == 'Admin' ? '/admin_home' : '/home';
+    //     // Determine the correct home page based on user role
+    //     String homeRoute = authProvider.role == 'Admin' ? '/admin_home' : '/home';
 
-        // Navigate to home screen and prevent default back navigation
-        Navigator.pushReplacementNamed(context, homeRoute);
+    //     // Navigate to home screen and prevent default back navigation
+    //     Navigator.pushReplacementNamed(context, homeRoute);
 
-        return Future.value(false); // Prevents page from closing
-      },
-      child: Scaffold(
+    //     return Future.value(false); // Prevents page from closing
+    //   },
+    //   child:
+     Scaffold(
         backgroundColor: Theme.of(context).colorScheme.tertiary,
         appBar: AppBar(
           backgroundColor: Theme.of(context).colorScheme.primary,
@@ -242,7 +243,6 @@ class _ProfilePagesState extends State<ProfilePages> {
             ),
           ),
         ),
-      ),
     );
   }
 

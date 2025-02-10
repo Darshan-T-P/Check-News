@@ -1,3 +1,4 @@
+import 'dart:ui'; // Import this for blur effect
 import 'dart:io';
 import 'package:check_news/services/cloudinary_services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,8 +24,10 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
   bool _isUploading = false;
 
   Future<void> pickImages() async {
-    FilePickerResult? result = await FilePicker.platform
-        .pickFiles(type: FileType.image, allowMultiple: true);
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: true,
+    );
     if (result != null && result.files.isNotEmpty) {
       setState(() {
         _filePickerResults.add(result);
@@ -32,7 +35,11 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No images selected!")),
+        const SnackBar(
+          backgroundColor: Colors.white,
+          behavior: SnackBarBehavior.floating,
+          content: Text("No images selected!"),
+        ),
       );
     }
   }
@@ -87,7 +94,6 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
         await newsRef.update({"images": uploadedUrls});
       }
 
-      // Wait for animation to finish before navigating back
       await Future.delayed(const Duration(seconds: 3));
 
       setState(() {
@@ -95,10 +101,12 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("News posted successfully!")),
+        const SnackBar(
+          backgroundColor: Colors.white,
+          behavior: SnackBarBehavior.floating,
+          content: Text("News posted successfully!",)),
       );
 
-      // Navigate back only after animation completes
       if (mounted) {
         Navigator.popUntil(context, (route) => route.isFirst);
       }
@@ -108,7 +116,10 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Failed to post news: $e")),
+        SnackBar(
+          backgroundColor: Colors.white,
+          behavior: SnackBarBehavior.floating,
+          content: Text("Failed to post news: $e")),
       );
     }
   }
@@ -123,110 +134,128 @@ class _SelectImageScreenState extends State<SelectImageScreen> {
         centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Image Previews
-            _imagePaths.isNotEmpty
-                ? SizedBox(
-                    height: 200,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _imagePaths.length,
-                      itemBuilder: (context, index) => Stack(
-                        children: [
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 5.0),
-                            child: Image.file(File(_imagePaths[index]!),
-                                height: 200, fit: BoxFit.contain),
-                          ),
-                          Positioned(
-                            top: 5,
-                            right: 5,
-                            child: IconButton(
-                              icon: const Icon(Icons.cancel,
-                                  color: Colors.red, size: 30),
-                              onPressed: () => removeImage(index),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : Container(
-                    height: 200,
-                    width: double.infinity,
-                    color: Theme.of(context).colorScheme.secondary,
-                    child: const Center(
-                        child: Text("No images selected",
-                            style: TextStyle(fontSize: 16))),
-                  ),
-            const SizedBox(height: 30),
-
-            // Select Images Button
-            ElevatedButton(
-              onPressed: pickImages,
-              style: ElevatedButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-                textStyle: const TextStyle(fontSize: 18),
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-              ),
-              child: const Text("Select Images"),
-            ),
-            const SizedBox(height: 100),
-            ElevatedButton(
-              onPressed: uploadNewsToDb,
-              style: ElevatedButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 16, horizontal: 66),
-                textStyle: const TextStyle(fontSize: 18),
-                backgroundColor: Theme.of(context).colorScheme.secondary,
-              ),
-              child: const Text("Post without Image"),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Upload Button with Animation
-            _isUploading
-                ? Column(
-                    children: [
-                      Lottie.asset(
-                        'assets/images/loding.json',
+      body: Stack(
+        children: [
+          // Main Content
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _imagePaths.isNotEmpty
+                    ? SizedBox(
                         height: 200,
-                        width: 200,
-                        onLoaded: (composition) {
-                          if (composition.duration == 0) {
-                            debugPrint("Lottie animation has an issue.");
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      const Text("Uploading... Please wait",
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                    ],
-                  )
-                : ElevatedButton.icon(
-                    onPressed: uploadNewsToDb,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 16, horizontal: 80),
-                      textStyle: const TextStyle(fontSize: 18),
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                      foregroundColor: Colors.white,
-                    ),
-                    icon: const Icon(Icons.send, color: Colors.white),
-                    label: const Text("Post News",
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold)),
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _imagePaths.length,
+                          itemBuilder: (context, index) => Stack(
+                            children: [
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 5.0),
+                                child: Image.file(File(_imagePaths[index]!),
+                                    height: 200, fit: BoxFit.contain),
+                              ),
+                              Positioned(
+                                top: 5,
+                                right: 5,
+                                child: IconButton(
+                                  icon: const Icon(Icons.cancel,
+                                      color: Colors.red, size: 30),
+                                  onPressed: () => removeImage(index),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : Container(
+                        height: 200,
+                        width: double.infinity,
+                        color: Theme.of(context).colorScheme.secondary,
+                        child: const Center(
+                            child: Text("No images selected",
+                                style: TextStyle(fontSize: 16)))),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: pickImages,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 24),
+                    textStyle: const TextStyle(fontSize: 18),
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
                   ),
-          ],
-        ),
+                  child: const Text("Select Images"),
+                ),
+                const SizedBox(height: 100),
+                ElevatedButton(
+                  onPressed: uploadNewsToDb,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16, horizontal: 66),
+                    textStyle: const TextStyle(fontSize: 18),
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                  ),
+                  child: const Text("Post without Image"),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: uploadNewsToDb,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 16, horizontal: 80),
+                    textStyle: const TextStyle(fontSize: 18),
+                    backgroundColor: Theme.of(context).colorScheme.secondary,
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.send, color: Colors.white),
+                  label: const Text("Post News",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
+
+          // Blur Background and Animation when Uploading
+          if (_isUploading)
+            Positioned.fill(
+              child: Stack(
+                children: [
+                  // Blur Effect
+                  BackdropFilter(
+                    filter:
+                        ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Blur effect
+                    child: Container(
+                      color: Colors.white.withOpacity(0.6), // Slight overlay
+                    ),
+                  ),
+
+                  Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Lottie.asset(
+                          'assets/images/loding.json',
+                          height: 400,
+                          width: 400,
+                          fit: BoxFit.cover,
+                        ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          "Uploading... Please wait",
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

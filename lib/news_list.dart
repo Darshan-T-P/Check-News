@@ -34,6 +34,7 @@ class _NewsListState extends State<NewsList> {
 
   // Function to refresh news
   Future<void> _refreshNews() async {
+    setState(() {});
     return await Future.delayed(Duration(seconds: 2));
   }
 
@@ -165,12 +166,17 @@ class _NewsListState extends State<NewsList> {
                         }
                         if (snapshot.hasError) {
                           return const Center(
-                            child: Text("Error loading news!"),
+                            child: Text("Error loading news!!!"),
                           );
                         }
                         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                           return const Center(
-                            child: Text("No news available"),
+                            child: Column(
+                              children: [
+                                Icon(Icons.browser_not_supported_rounded),
+                                Text("No news available"),
+                              ],
+                            ),
                           );
                         }
 

@@ -11,13 +11,16 @@ import 'package:check_news/route/login.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  // await AuthProvider().initMessaging();
   await dotenv.load(fileName: ".env");
 
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),  // 🔹 Provides Auth State
-        ChangeNotifierProvider(create: (_) => StorageServices()) // Storage service
+        ChangeNotifierProvider(
+            create: (_) => AuthProvider()), // 🔹 Provides Auth State
+        ChangeNotifierProvider(
+            create: (_) => StorageServices()) // Storage service
       ],
       child: MyApp(),
     ),
@@ -40,10 +43,17 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
         textTheme: const TextTheme(
-          titleMedium: TextStyle(fontFamily: 'EBGaramond', fontSize: 32, fontWeight: FontWeight.bold),
+          titleMedium: TextStyle(
+              fontFamily: 'EBGaramond',
+              fontSize: 32,
+              fontWeight: FontWeight.bold),
           titleSmall: TextStyle(fontWeight: FontWeight.bold),
-          headlineMedium: TextStyle(fontWeight: FontWeight.bold, fontSize: 32, color: Colors.black),
-          headlineSmall: TextStyle(fontFamily: 'EBGaramond', fontWeight: FontWeight.normal, fontSize: 32),
+          headlineMedium: TextStyle(
+              fontWeight: FontWeight.bold, fontSize: 32, color: Colors.black),
+          headlineSmall: TextStyle(
+              fontFamily: 'EBGaramond',
+              fontWeight: FontWeight.normal,
+              fontSize: 32),
           bodyLarge: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
       ),

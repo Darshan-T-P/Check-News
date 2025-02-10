@@ -59,7 +59,10 @@ class _AdminPageState extends State<AdminPage>
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("News item approved successfully")),
+      const SnackBar(
+        backgroundColor: Colors.white,
+        behavior: SnackBarBehavior.floating,
+        content: Text("News item approved successfully",style: TextStyle(color: Colors.white),)),
     );
   }
 
@@ -68,7 +71,14 @@ class _AdminPageState extends State<AdminPage>
     await FirebaseFirestore.instance.collection("news").doc(newsId).delete();
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("News item deleted successfully")),
+       SnackBar(
+        backgroundColor: Colors.white,
+        behavior: SnackBarBehavior.floating,
+        content:  const Text("News item deleted successfully",style: TextStyle(color: Colors.black),),
+        action: SnackBarAction(label: "UNDO",textColor: Colors.black, onPressed: (){
+
+        },),
+        ),
     );
   }
 

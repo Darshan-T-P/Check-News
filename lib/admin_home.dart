@@ -14,7 +14,8 @@ class AdminHome extends StatefulWidget {
 }
 
 class _AdminHomeState extends State<AdminHome> {
-int currentPage = 0;
+  int currentPage = 0;
+  final GlobalKey<CurvedNavigationBarState> _bottomkey = GlobalKey();
 
   // Pages corresponding to bottom navigation bar
   final List<Widget> pages = [
@@ -33,35 +34,51 @@ int currentPage = 0;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body: pages[currentPage], // Display the selected page dynamically
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-        floatingActionButton: FloatingActionButton(
-          elevation: 6.0, // Gives a floating effect
-          splashColor: Colors.green.withOpacity(0.3), // Soft ripple effect
-          highlightElevation: 10.0, // Increases elevation on press
-          backgroundColor: Colors.white,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => AddNews()),
-            );
-          },
-          child: const Icon(Icons.add,
-              color: Colors.black, size: 30), // Bigger icon
-        ),
-        bottomNavigationBar: CurvedNavigationBar(
-          backgroundColor: Theme.of(context).colorScheme.tertiary,
-          color: const Color.fromRGBO(3, 15, 15, 1),
-          items: _navigationItem,
-          height: 60,
-          animationDuration: const Duration(milliseconds: 500),
-          onTap: (index) {
+    return PopScope(
+      canPop: currentPage==0,
+      onPopInvokedWithResult: (didPop,result){
+        if (!didPop) {
+          if (currentPage != 0) {
             setState(() {
-              currentPage = index;
+              currentPage = 0; // Go back to the home screen instead of exiting
             });
-          },
+
+            // Update the bottom navigation bar to reflect the home screen
+            _bottomkey.currentState?.setPage(0);
+          }
+        }
+      },
+      child: SafeArea(
+        child: Scaffold(
+          body: pages[currentPage], // Display the selected page dynamically
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+          floatingActionButton: FloatingActionButton(
+            elevation: 6.0, // Gives a floating effect
+            splashColor: Colors.green.withOpacity(0.3), // Soft ripple effect
+            highlightElevation: 10.0, // Increases elevation on press
+            backgroundColor: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddNews()),
+              );
+            },
+            child: const Icon(Icons.add,
+                color: Colors.black, size: 30), // Bigger icon
+          ),
+          bottomNavigationBar: CurvedNavigationBar(
+            key: _bottomkey,
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
+            color: const Color.fromRGBO(3, 15, 15, 1),
+            items: _navigationItem,
+            height: 60,
+            animationDuration: const Duration(milliseconds: 500),
+            onTap: (index) {
+              setState(() {
+                currentPage = index;
+              });
+            },
+          ),
         ),
       ),
     );
