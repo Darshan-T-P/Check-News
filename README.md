@@ -5,6 +5,11 @@
   <img src="https://img.shields.io/badge/Dart-3.6-0175C2?style=for-the-badge&logo=dart&logoColor=white"/>
   <img src="https://img.shields.io/badge/Firebase-Enabled-FFCA28?style=for-the-badge&logo=firebase&logoColor=black"/>
   <img src="https://img.shields.io/badge/Cloudinary-Integrated-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white"/>
+  <br/>
+  <img src="https://github.com/Darshan-T-P/Check-News/actions/workflows/release.yml/badge.svg" alt="Build & Release"/>
+  <a href="https://github.com/Darshan-T-P/Check-News/releases/latest">
+    <img src="https://img.shields.io/github/v/release/Darshan-T-P/Check-News?style=for-the-badge&logo=android&label=Download%20APK&color=brightgreen"/>
+  </a>
 </p>
 
 <p align="center">
