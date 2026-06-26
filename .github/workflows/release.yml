@@ -1,0 +1,96 @@
+name: 🚀 Build & Release APK
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'        # Triggers on version tags like v1.0.0, v1.2.3
+  workflow_dispatch:    # Allow manual trigger from GitHub Actions UI
+
+jobs:
+  build:
+    name: Build Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout code ──────────────────────────────────────────────────
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Java (required for Android build) ───────────────────────
+      - name: ☕ Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # ── 3. Set up Flutter ─────────────────────────────────────────────────
+      - name: 🐦 Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.0'
+          channel: 'stable'
+          cache: true
+
+      # ── 4. Create .env file from GitHub Secrets ───────────────────────────
+      - name: 🔐 Create .env file
+        run: |
+          echo "CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }}" >> .env
+          echo "CLOUDINARY_UPLOAD_PRESET=${{ secrets.CLOUDINARY_UPLOAD_PRESET }}" >> .env
+          echo "CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }}" >> .env
+          echo "CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }}" >> .env
+
+      # ── 5. Create google-services.json from secret ────────────────────────
+      - name: 🔥 Create google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+
+      # ── 6. Install dependencies ────────────────────────────────────────────
+      - name: 📦 Install Flutter dependencies
+        run: flutter pub get
+
+      # ── 7. Run analyzer ───────────────────────────────────────────────────
+      - name: 🔍 Analyze code
+        run: flutter analyze --no-fatal-infos
+        continue-on-error: true
+
+      # ── 8. Build release APK ──────────────────────────────────────────────
+      - name: 🏗️ Build release APK
+        run: flutter build apk --release --split-per-abi
+
+      # ── 9. Rename APKs with version tag ───────────────────────────────────
+      - name: 📝 Rename APK files
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          mkdir -p release-apks
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk release-apks/CheckNews-${VERSION}-arm64.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk release-apks/CheckNews-${VERSION}-arm32.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk release-apks/CheckNews-${VERSION}-x64.apk
+          ls -lh release-apks/
+
+      # ── 10. Create GitHub Release with APK assets ─────────────────────────
+      - name: 🎉 Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Check News ${{ github.ref_name }}"
+          body: |
+            ## 📰 Check News ${{ github.ref_name }}
+
+            ### 📲 Download
+            | Arch | File | For |
+            |---|---|---|
+            | ARM64 | `CheckNews-${{ github.ref_name }}-arm64.apk` | Most modern phones (recommended) |
+            | ARM32 | `CheckNews-${{ github.ref_name }}-arm32.apk` | Older Android phones |
+            | x64   | `CheckNews-${{ github.ref_name }}-x64.apk`  | Emulators / x86 devices |
+
+            ### ⚙️ Installation
+            1. Download the APK for your device architecture
+            2. Enable **"Install from unknown sources"** in Android settings
+            3. Open the APK file to install
+
+            ### 📋 What's New
+            - See [commit history](https://github.com/Darshan-T-P/Check-News/commits/master) for changes
+          files: |
+            release-apks/CheckNews-*.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
